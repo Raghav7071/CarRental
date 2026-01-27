@@ -9,7 +9,7 @@ const CarCard = ({ car }) => {
   return (
     <div
       onClick={() => {
-        navigate(`/car-details/${car._id}`)
+        navigate(`/cars-details/${car._id}`)
         window.scrollTo(0, 0)
       }}
       className="group rounded-xl overflow-hidden shadow-lg hover:-translate-y-1 transition-all duration-500 cursor-pointer bg-white flex flex-col h-full"
