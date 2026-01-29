@@ -3,6 +3,30 @@ import { assets } from "../../assets/assets";
 
 const AddCar = () => {
   const [image, setImage] = useState(null);
+  const [formData, setFormData] = useState({
+    brand: "",
+    model: "",
+    year: "",
+    dailyPrice: "",
+    category: "",
+    transmission: "",
+    fuelType: "",
+    seatingCapacity: "",
+    location: "",
+    description: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = () => {
+    // Here you can send formData and image to your backend
+    console.log("Car Data:", formData);
+    console.log("Car Image:", image);
+    alert("Car listed successfully!");
+  };
 
   return (
     <div className="flex-1 px-6 md:px-10 py-8 bg-[#F9FAFB] min-h-screen">
@@ -48,9 +72,7 @@ const AddCar = () => {
                     className="w-5 h-5"
                   />
                 </div>
-                <p className="text-xs text-gray-400">
-                  Click to upload car image
-                </p>
+                <p className="text-xs text-gray-400">Click to upload car image</p>
               </>
             )}
           </label>
@@ -63,6 +85,9 @@ const AddCar = () => {
             <label className="text-xs font-semibold text-gray-700">Brand</label>
             <input
               type="text"
+              name="brand"
+              value={formData.brand}
+              onChange={handleChange}
               placeholder="e.g. BMW, Mercedes, Audi..."
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -73,6 +98,9 @@ const AddCar = () => {
             <label className="text-xs font-semibold text-gray-700">Model</label>
             <input
               type="text"
+              name="model"
+              value={formData.model}
+              onChange={handleChange}
               placeholder="e.g. X5, E-Class, M4..."
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -83,6 +111,9 @@ const AddCar = () => {
             <label className="text-xs font-semibold text-gray-700">Year</label>
             <input
               type="number"
+              name="year"
+              value={formData.year}
+              onChange={handleChange}
               placeholder="2025"
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -95,6 +126,9 @@ const AddCar = () => {
             </label>
             <input
               type="number"
+              name="dailyPrice"
+              value={formData.dailyPrice}
+              onChange={handleChange}
               placeholder="100"
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -102,10 +136,13 @@ const AddCar = () => {
 
           {/* Category */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-700">
-              Category
-            </label>
-            <select className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 bg-white">
+            <label className="text-xs font-semibold text-gray-700">Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+            >
               <option value="">Select</option>
               <option>Sedan</option>
               <option>SUV</option>
@@ -117,10 +154,13 @@ const AddCar = () => {
 
           {/* Transmission */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-700">
-              Transmission
-            </label>
-            <select className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 bg-white">
+            <label className="text-xs font-semibold text-gray-700">Transmission</label>
+            <select
+              name="transmission"
+              value={formData.transmission}
+              onChange={handleChange}
+              className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+            >
               <option value="">Select</option>
               <option>Automatic</option>
               <option>Manual</option>
@@ -129,10 +169,13 @@ const AddCar = () => {
 
           {/* Fuel Type */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-700">
-              Fuel Type
-            </label>
-            <select className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 bg-white">
+            <label className="text-xs font-semibold text-gray-700">Fuel Type</label>
+            <select
+              name="fuelType"
+              value={formData.fuelType}
+              onChange={handleChange}
+              className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+            >
               <option value="">Select</option>
               <option>Petrol</option>
               <option>Diesel</option>
@@ -143,11 +186,12 @@ const AddCar = () => {
 
           {/* Seating Capacity */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-700">
-              Seating Capacity
-            </label>
+            <label className="text-xs font-semibold text-gray-700">Seating Capacity</label>
             <input
               type="number"
+              name="seatingCapacity"
+              value={formData.seatingCapacity}
+              onChange={handleChange}
               placeholder="5"
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -155,11 +199,12 @@ const AddCar = () => {
 
           {/* Location */}
           <div className="flex flex-col gap-1 md:col-span-3">
-            <label className="text-xs font-semibold text-gray-700">
-              Location
-            </label>
+            <label className="text-xs font-semibold text-gray-700">Location</label>
             <input
               type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
               placeholder="e.g. San Francisco, CA"
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -167,10 +212,11 @@ const AddCar = () => {
 
           {/* Description */}
           <div className="flex flex-col gap-1 md:col-span-3">
-            <label className="text-xs font-semibold text-gray-700">
-              Description
-            </label>
+            <label className="text-xs font-semibold text-gray-700">Description</label>
             <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
               rows="4"
               placeholder="Describe your car, its condition, and any notable details..."
               className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 resize-none"
@@ -180,7 +226,10 @@ const AddCar = () => {
 
         {/* Button */}
         <div className="mt-6">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md text-sm transition">
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md text-sm transition"
+          >
             + List Your Car
           </button>
         </div>
