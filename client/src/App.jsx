@@ -13,6 +13,7 @@ import Dashboard from './pages/owner/Dashboard';
 import AddCar from './pages/owner/AddCar';
 import MangeCars from './pages/owner/MangeCars';
 import MangeBookings from './pages/owner/MangeBookings';
+import Login from './components/Login';
 
 const App = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -21,7 +22,8 @@ const App = () => {
 
   return (
     <>
-      {/* Public Navbar */}
+      {showLogin && <Login setShowLogin={setShowLogin}/>}
+     
       {!isOwnerPath && <Navbar setShowLogin={setShowLogin} />}
 
       <Routes>
