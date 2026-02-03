@@ -14,16 +14,19 @@ import AddCar from './pages/owner/AddCar';
 import MangeCars from './pages/owner/MangeCars';
 import MangeBookings from './pages/owner/MangeBookings';
 import Login from './components/Login';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
+
   const [showLogin, setShowLogin] = useState(false);
   const location = useLocation();
   const isOwnerPath = location.pathname.startsWith('/owner');
 
   return (
     <>
-      {showLogin && <Login setShowLogin={setShowLogin}/>}
-     
+      {showLogin && <Login setShowLogin={setShowLogin} />}
+
       {!isOwnerPath && <Navbar setShowLogin={setShowLogin} />}
 
       <Routes>
@@ -44,7 +47,9 @@ const App = () => {
 
       {/* Public Footer */}
       {!isOwnerPath && <Footer />}
+      <ToastContainer position="bottom-right" />
     </>
+
   );
 };
 
