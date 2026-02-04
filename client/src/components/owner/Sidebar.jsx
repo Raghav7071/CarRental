@@ -31,7 +31,9 @@ const Sidebar = () => {
                         alt=""
                         className='w-20 h-20 rounded-full object-cover border-2 border-borderColor'
                     />
-                    <input type='file' id='image' accept='image/*' hidden onChange={e => setImage(e.target.files[0])} />
+                    <input type='file' id='image' accept='image/*' hidden onChange={e => {
+                        if (e.target.files[0]) setImage(e.target.files[0]);
+                    }} />
                     <div className='absolute hidden top-0 right-0 left-0 bottom-0 bg-black/10 rounded-full group-hover:flex items-center justify-center cursor-pointer'>
                         <img src={assets.edit_icon} alt="" className='w-5' />
                     </div>
