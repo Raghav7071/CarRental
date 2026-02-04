@@ -35,6 +35,12 @@ const AppContextProvider = (props) => {
     const searchCars = async (filters) => {
         try {
             setLoading(true);
+
+            // Clean undefined/null values
+            Object.keys(filters).forEach(key =>
+                (filters[key] === undefined || filters[key] === null || filters[key] === '') && delete filters[key]
+            );
+
             const params = new URLSearchParams(filters);
             const { data } = await axios.get(backendUrl + '/api/car/search?' + params);
             if (data.success) {

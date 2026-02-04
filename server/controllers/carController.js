@@ -36,7 +36,7 @@ export const carDetails = async (req, res) => {
 // Search cars with filters (public)
 export const searchCars = async (req, res) => {
     try {
-        const { brand, category, transmission, fuel_type, minPrice, maxPrice, location } = req.query;
+        const { brand, category, transmission, fuel_type, minPrice, maxPrice, location, pickupDate, returnDate } = req.query;
 
         const where = { isAvailable: true };
 
@@ -45,6 +45,30 @@ export const searchCars = async (req, res) => {
         if (transmission) where.transmission = transmission;
         if (fuel_type) where.fuel_type = fuel_type;
         if (location) where.location = { contains: location, mode: 'insensitive' };
+
+        // Date Availability Filter
+        if (pickupDate && returnDate) {
+            // Find bookings that overlap with the requested dates
+            const overlappingBookings = await prisma.booking.findMany({
+                where: {
+                    status: { in: ['pending', 'confirmed'] },
+                    OR: [
+                        {
+                            pickupDate: { lte: returnDate },
+                            returnDate: { gte: pickupDate }
+                        }
+                    ]
+                },
+                select: { carId: true }
+            });
+
+            const bookedCarIds = overlappingBookings.map(b => b.carId);
+
+            // Exclude booked cars
+            if (bookedCarIds.length > 0) {
+                where.id = { notIn: bookedCarIds };
+            }
+        }
 
         const cars = await prisma.car.findMany({
             where,

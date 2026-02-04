@@ -4,10 +4,13 @@ import CarCard from '../components/CarCard'
 import { assets } from '../assets/assets'
 import { AppContext } from '../context/AppContext'
 import Loader from '../components/Loader'
+import { useSearchParams } from 'react-router-dom';
 
 const Cars = () => {
   const { allCars, fetchAllCars, searchCars, loading } = useContext(AppContext);
-  const [searchInput, setSearchInput] = useState('');
+  const [searchParams] = useSearchParams();
+
+  const [searchInput, setSearchInput] = useState(searchParams.get('location') || '');
   const [filters, setFilters] = useState({
     category: '',
     transmission: '',
@@ -15,7 +18,26 @@ const Cars = () => {
   });
   const [sortBy, setSortBy] = useState('');
 
-  // Filter and sort cars locally
+  // Initial fetch with query params if present
+  useEffect(() => {
+    const pickupDate = searchParams.get('pickupDate');
+    const returnDate = searchParams.get('returnDate');
+    const location = searchParams.get('location');
+
+    if (pickupDate && returnDate) {
+      // If dates are present, trigger a server-side search for availability checking
+      searchCars({
+        location: location || '',
+        pickupDate,
+        returnDate
+      });
+    } else {
+      // Otherwise just fetch all cars (or use existing allCars if already loaded and no specific search)
+      fetchAllCars();
+    }
+  }, [searchParams]);
+
+  // Filter and sort cars locally (for other attributes)
   const getFilteredCars = () => {
     let filtered = [...allCars];
 
@@ -55,20 +77,23 @@ const Cars = () => {
     setSearchInput('');
     setFilters({ category: '', transmission: '', fuel_type: '' });
     setSortBy('');
+    fetchAllCars(); // Reset to all cars
   };
 
-  useEffect(() => {
-    fetchAllCars();
-  }, []);
-
   const filteredCars = getFilteredCars();
+
+  // Display date filter info if active
+  const dateFilterActive = searchParams.get('pickupDate') && searchParams.get('returnDate');
 
   return (
     <div>
       <div className='flex flex-col items-center py-20 bg-light max-md:px-4'>
         <Title
-          title='Available Cars'
-          subTitle='Browse our selection of premium vehicles available for your next adventure'
+          title={dateFilterActive ? 'Available Cars for Your Dates' : 'Available Cars'}
+          subTitle={dateFilterActive
+            ? `Showing cars available from ${searchParams.get('pickupDate')} to ${searchParams.get('returnDate')}`
+            : 'Browse our selection of premium vehicles available for your next adventure'
+          }
         />
 
         {/* Search Bar */}
@@ -111,7 +136,7 @@ const Cars = () => {
               <option value="newest">Newest First</option>
             </select>
 
-            {(searchInput || filters.category || filters.transmission || filters.fuel_type || sortBy) && (
+            {(searchInput || filters.category || filters.transmission || filters.fuel_type || sortBy || dateFilterActive) && (
               <button
                 onClick={clearFilters}
                 className='text-sm text-red-500 hover:underline'
@@ -138,7 +163,7 @@ const Cars = () => {
                 <img src={assets.car_icon} alt="" className='w-16 mx-auto opacity-20 mb-4' />
                 <p className='text-gray-400'>No cars found matching your criteria</p>
                 <button onClick={clearFilters} className='mt-4 text-primary hover:underline'>
-                  Clear filters
+                  View All Cars
                 </button>
               </div>
             ) : (
