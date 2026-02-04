@@ -1,92 +1,129 @@
-import React, { useEffect, useState } from 'react'
-import { dummyMyBookingsData } from '../../assets/assets'
+import React, { useContext, useEffect, useState } from 'react'
 import Title from '../../components/Title'
+import { AppContext } from '../../context/AppContext'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import Loader from '../../components/Loader'
 
 const MangeBookings = () => {
-  const currency = import.meta.env.VITE_CURRENCY
+  const { backendUrl, token, currency } = useContext(AppContext);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [bookings, setBooking] = useState([])
+  const fetchOwnerBookings = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(backendUrl + '/api/owner/bookings', {
+        headers: { authorization: token }
+      });
+      if (data.success) {
+        setBookings(data.bookings);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const fetchOwnerCarsBookings = async () => {
-    setBooking(dummyMyBookingsData)
-  }
+  const updateStatus = async (bookingId, status) => {
+    try {
+      const { data } = await axios.post(backendUrl + '/api/owner/update-booking',
+        { bookingId, status },
+        { headers: { authorization: token } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        fetchOwnerBookings();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  };
 
   useEffect(() => {
-    fetchOwnerCarsBookings()
-  }, [])
+    if (token) {
+      fetchOwnerBookings();
+    }
+  }, [token]);
+
+  if (loading) return <Loader />;
 
   return (
-    <div className="px-4 pt-10 md:px-10 w-full">
-      {/* LEFT aligned Title */}
+    <div className="px-6 pt-10 w-full max-w-6xl">
       <Title
         title="Manage Bookings"
-        subTitle="Track all customer bookings, approve or cancel requests, and booking statuses."
+        subTitle="Approve or cancel customer rental requests"
         align="left"
       />
 
-      <div className="max-w-3xl w-full rounded-md overflow-hidden border border-borderColor mt-6 bg-white">
-        <table className="w-full border-collapse text-sm text-gray-600">
-          <thead className="bg-gray-50 text-gray-500">
-            <tr>
-              <th className="p-3 font-medium text-left">Car</th>
-              <th className="p-3 font-medium text-left max-md:hidden">
-                Date Range
-              </th>
-              <th className="p-3 font-medium text-left">Total</th>
-              <th className="p-3 font-medium text-left max-md:hidden">
-                Payment
-              </th>
-              <th className="p-3 font-medium text-center">Actions</th>
+      <div className="mt-10 bg-white rounded-2xl border border-borderColor overflow-hidden shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-widest border-b border-borderColor text-left">
+              <th className="p-5">Customer / Car</th>
+              <th className="p-5 max-md:hidden">Rental Dates</th>
+              <th className="p-5">Payment</th>
+              <th className="p-5 text-center">Status / Action</th>
             </tr>
           </thead>
 
-          <tbody>
-            {bookings.map((booking, index) => (
-              <tr
-                key={index}
-                className="border-t border-borderColor text-gray-500"
-              >
-                <td className="p-3 flex items-center gap-3">
-                  <img
-                    src={booking?.car?.image}
-                    alt=""
-                    className="h-12 w-12 aspect-square rounded-md object-cover"
-                  />
-                  <p className="font-medium max-md:hidden">
-                    {booking?.car?.brand} {booking?.car?.model}
-                  </p>
-                </td>
-                <td className='p-3 max-hidden'>
-                  {booking.pickupDate.split('T')[0]} to {booking.returnDate.split('T')[0]}
-
-                </td>
-                <td className='p-3'>{currency}{booking.price}</td>
-                <td className='p-3 max-md:hidden'>
-                  <span className='bg-gray-100 px-3 py-1 rounded-full text-xs'>offline</span>
-                </td>
-                <td className='p-3'>
-                  {booking.status === 'pending' ? (
-                    <select value={booking.status} className='px-2 py-1.5 mt-1 test-gray-500 border border-borderColor rounded-md outline-none'>
-                      <option value='pending'>Pending</option>
-                      <option value='cancelled'>Cancelled</option>
-                      <option value='conffirmed'>Confirmed</option>
-
-
-                    </select>
-                  ): (
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.status === 'confirmed' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}>{booking.status}</span>
-                  )}
-
-                </td>
-
-
-              </tr>
-            ))}
-
-            {bookings.length === 0 && (
+          <tbody className="divide-y divide-gray-50">
+            {bookings.length > 0 ? (
+              bookings.map((booking) => (
+                <tr key={booking.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="p-5">
+                    <div className="flex items-center gap-4">
+                      <img src={booking.car?.image} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                      <div>
+                        <p className="font-bold text-gray-800">{booking.user?.name}</p>
+                        <p className="text-xs text-primary font-medium">{booking.car?.brand} {booking.car?.model}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className='p-5 max-md:hidden'>
+                    <p className='text-gray-600 font-medium'>{booking.pickupDate}</p>
+                    <p className='text-gray-400 text-xs mt-1'>to {booking.returnDate}</p>
+                  </td>
+                  <td className='p-5'>
+                    <p className="font-bold text-gray-800">{currency}{booking.amount}</p>
+                    <span className='text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded uppercase font-bold'>Offline</span>
+                  </td>
+                  <td className='p-5'>
+                    <div className="flex justify-center">
+                      {booking.status === 'pending' ? (
+                        <div className='flex gap-2'>
+                          <button
+                            onClick={() => updateStatus(booking.id, 'confirmed')}
+                            className='px-4 py-1.5 bg-primary text-white rounded-lg font-bold text-xs hover:bg-blue-700 transition-colors'
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => updateStatus(booking.id, 'cancelled')}
+                            className='px-4 py-1.5 border border-red-200 text-red-500 rounded-lg font-bold text-xs hover:bg-red-50 transition-colors'
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                          }`}>
+                          {booking.status}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-gray-400">
-                  No bookings found
+                <td colSpan="4" className="p-20 text-center">
+                  <p className="text-gray-400 font-medium">No customer bookings found.</p>
                 </td>
               </tr>
             )}
@@ -94,7 +131,7 @@ const MangeBookings = () => {
         </table>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MangeBookings
+export default MangeBookings;

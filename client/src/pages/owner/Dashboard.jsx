@@ -1,115 +1,145 @@
-import React, { useEffect, useState } from "react";
-import { assets, dummyDashboardData } from "../../assets/assets";
+import React, { useContext, useEffect, useState } from "react";
+import { assets } from "../../assets/assets";
+import { AppContext } from "../../context/AppContext";
+import axios from "axios";
+import Loader from "../../components/Loader";
 
 const Dashboard = () => {
-  const currency = import.meta.env.VITE_CURRENCY;
-
+  const { backendUrl, token, currency } = useContext(AppContext);
+  const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     totalCars: 0,
     totalBookings: 0,
     pendingBookings: 0,
-    completedBookings: 0,
+    confirmedBookings: 0,
+    totalRevenue: 0,
     recentBookings: [],
-    monthlyRevenue: 0,
   });
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const { data: response } = await axios.get(backendUrl + '/api/owner/dashboard-stats', {
+        headers: { authorization: token }
+      });
+      if (response.success) {
+        setData(response.stats);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchDashboardData();
+    }
+  }, [token]);
 
   const dashboardCards = [
     { title: "Total Cars", value: data.totalCars, icon: assets.carIconColored },
     { title: "Total Bookings", value: data.totalBookings, icon: assets.listIconColored },
-    { title: "Pending", value: data.pendingBookings, icon: assets.cautionIconColored },
-    { title: "Confirmed", value: data.completedBookings, icon: assets.listIconColored },
+    { title: "Pending", value: data.pendingBookings, icon: assets.listIconColored, color: "text-yellow-600" },
+    { title: "Confirmed", value: data.confirmedBookings, icon: assets.listIconColored, color: "text-green-600" },
   ];
 
-  useEffect(() => {
-    setData(dummyDashboardData);
-  }, []);
+  if (loading) return <Loader />;
 
   return (
     <div className="px-6 pt-8 flex-1 max-w-5xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold mb-2">Admin Dashboard</h1>
-        <p className="text-sm text-gray-600 font-medium max-w-xl">
-          Monitor overall platform performance including total cars, bookings, revenue,
-          and recent activities
+        <h1 className="text-3xl font-extrabold mb-2 text-gray-800">Owner Dashboard</h1>
+        <p className="text-sm text-gray-500 font-medium max-w-xl">
+          Overview of your car rental business performance and recent activities.
         </p>
       </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {dashboardCards.map((card, index) => (
           <div
             key={index}
-            className="flex flex-col p-4 rounded-lg border border-gray-200 bg-white"
+            className="flex flex-col p-6 rounded-2xl border border-borderColor bg-white shadow-sm hover:shadow-md transition-shadow"
           >
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-xs text-gray-400">{card.title}</h1>
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
-                <img src={card.icon} alt="" className="h-4 w-4" />
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-sm font-bold text-gray-400 uppercase tracking-wider">{card.title}</h1>
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50">
+                <img src={card.icon} alt="" className="h-5 w-5" />
               </div>
             </div>
-            <p className="text-2xl font-bold">{card.value}</p>
+            <p className={`text-3xl font-black ${card.color || 'text-gray-800'}`}>{card.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Content */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Bookings */}
-        <div className="md:col-span-2 p-5 border border-gray-200 rounded-lg bg-white">
-          <h1 className="text-lg font-bold mb-1">Recent Bookings</h1>
-          <p className="text-sm text-gray-400 mb-4">Latest customer bookings</p>
+        <div className="lg:col-span-2 p-6 border border-borderColor rounded-2xl bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">Recent Bookings</h1>
+              <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">Latest transactions</p>
+            </div>
+          </div>
 
-          {data.recentBookings?.length > 0 ? (
-            data.recentBookings.map((booking, index) => (
-              <div
-                key={index}
-                className="py-3 flex items-center justify-between border-b border-gray-100 last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50">
-                    <img
-                      src={assets.listIconColored}
-                      alt=""
-                      className="h-4 w-4"
-                    />
+          <div className="flex flex-col gap-1">
+            {data.recentBookings && data.recentBookings.length > 0 ? (
+              data.recentBookings.map((booking, index) => (
+                <div
+                  key={index}
+                  className="py-4 flex items-center justify-between border-b border-gray-50 last:border-0"
+                >
+                  <div className="flex items-center gap-4">
+                    <img src={booking.car?.image} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                    <div>
+                      <p className="font-bold text-sm text-gray-800">
+                        {booking.car?.brand} {booking.car?.model}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">
+                        {booking.user?.name} · {new Date(booking.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="font-semibold text-sm">
-                      {booking?.car?.brand} {booking?.car?.model}
+                  <div className="flex items-center gap-6">
+                    <p className="text-sm font-bold text-gray-800">
+                      {currency}{booking.amount}
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {booking?.createdAt ? booking.createdAt.split("T")[0] : "N/A"}
-                    </p>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${booking.status === 'confirmed' ? 'bg-green-100 text-green-600' :
+                        booking.status === 'cancelled' ? 'bg-red-100 text-red-600' :
+                          'bg-yellow-100 text-yellow-600'
+                      }`}>
+                      {booking.status}
+                    </span>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <p className="text-sm font-medium text-gray-600">
-                    {currency}
-                    {booking?.price}
-                  </p>
-                  <span className="px-4 py-1 bg-gray-100 rounded-full text-xs text-gray-700">
-                    {booking?.status}
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className="py-10 text-center">
+                <p className="text-sm text-gray-400">No recent bookings to show.</p>
               </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-400">No recent bookings found.</p>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Monthly Revenue */}
-        <div className="p-5 border border-gray-200 rounded-lg bg-white h-fit">
-          <h1 className="text-lg font-bold mb-1">Monthly Revenue</h1>
-          <p className="text-sm text-gray-400">Revenue for current month</p>
+        {/* Total Revenue */}
+        <div className="p-8 border border-borderColor rounded-2xl bg-gradient-to-br from-primary to-blue-700 text-white shadow-xl h-fit">
+          <h1 className="text-lg font-bold">Total Revenue</h1>
+          <p className="text-xs text-blue-200 uppercase font-bold tracking-widest mt-1">From Confirmed Bookings</p>
 
-          <p className="text-3xl mt-6 font-semibold text-primary">
-            {currency}
-            {data.monthlyRevenue}
-          </p>
+          <div className="mt-8">
+            <p className="text-4xl font-black">{currency}{data.totalRevenue}</p>
+          </div>
+
+          <div className="mt-8 pt-4 border-t border-white/20">
+            <p className="text-sm text-blue-100">
+              {data.confirmedBookings} confirmed bookings
+            </p>
+          </div>
         </div>
       </div>
     </div>

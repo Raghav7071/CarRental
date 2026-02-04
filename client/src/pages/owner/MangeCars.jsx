@@ -1,117 +1,164 @@
-import React, { useEffect, useState } from "react";
-import { assets, dummyCarData } from "../../assets/assets";
+import React, { useContext, useEffect, useState } from "react";
+import { assets } from "../../assets/assets";
 import Title from "../../components/Title";
+import { AppContext } from "../../context/AppContext";
+import axios from "axios";
+import { toast } from "react-toastify";
+import Loader from "../../components/Loader";
 
 const MangeCars = () => {
-  const currency = import.meta.env.VITE_CURRENCY || "$";
+  const { backendUrl, token, currency } = useContext(AppContext);
   const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchOwnerCars = async () => {
-    // make all cars available
-    const updatedCars = dummyCarData.map((car) => ({
-      ...car,
-      isAvailiable: true,
-    }));
-    setCars(updatedCars);
+    try {
+      setLoading(true);
+      const { data } = await axios.get(backendUrl + '/api/owner/cars', {
+        headers: { authorization: token }
+      });
+      if (data.success) {
+        setCars(data.cars);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (carId) => {
+    if (!window.confirm('Are you sure you want to delete this car?')) return;
+
+    try {
+      const { data } = await axios.post(backendUrl + '/api/owner/delete-car',
+        { carId },
+        { headers: { authorization: token } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        fetchOwnerCars();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  };
+
+  const handleToggleAvailability = async (carId) => {
+    try {
+      const { data } = await axios.post(backendUrl + '/api/owner/toggle-availability',
+        { carId },
+        { headers: { authorization: token } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        fetchOwnerCars();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
   };
 
   useEffect(() => {
-    fetchOwnerCars();
-  }, []);
+    if (token) {
+      fetchOwnerCars();
+    }
+  }, [token]);
+
+  if (loading) return <Loader />;
 
   return (
-    <div className="px-4 pt-10 md:px-10 w-full">
-      {/* LEFT aligned Title */}
+    <div className="px-6 pt-10 w-full max-w-6xl">
       <Title
-        title="Manage Cars"
-        subTitle="View all listed cars, update their details, or remove them from the booking platform"
+        title="Manage Your Cars"
+        subTitle="View and manage all your listed vehicles"
         align="left"
       />
 
-      <div className="max-w-3xl w-full rounded-md overflow-hidden border border-borderColor mt-6 bg-white">
-        <table className="w-full border-collapse text-sm text-gray-600">
-          <thead className="bg-gray-50 text-gray-500">
+      <div className="mt-10 overflow-hidden bg-white border border-borderColor rounded-2xl shadow-sm">
+        <table className="w-full border-collapse text-left text-sm">
+          <thead className="bg-gray-50 border-b border-borderColor font-bold uppercase text-[10px] tracking-widest text-gray-400">
             <tr>
-              <th className="p-3 font-medium text-left">Car</th>
-              <th className="p-3 font-medium text-left max-md:hidden">
-                Category
-              </th>
-              <th className="p-3 font-medium text-left">Price</th>
-              <th className="p-3 font-medium text-left max-md:hidden">
-                Status
-              </th>
-              <th className="p-3 font-medium text-center">Actions</th>
+              <th className="p-5 font-bold">Vehicle Details</th>
+              <th className="p-5 max-md:hidden">Category</th>
+              <th className="p-5">Daily Rate</th>
+              <th className="p-5 max-md:hidden">Status</th>
+              <th className="p-5 text-center">Actions</th>
             </tr>
           </thead>
 
-          <tbody>
-            {cars.map((car, index) => (
-              <tr
-                key={index}
-                className="border-b border-borderColor last:border-0 hover:bg-gray-50"
-              >
-                {/* Car */}
-                <td className="p-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={car.image}
-                      alt=""
-                      className="h-12 w-12 aspect-square rounded-md object-cover"
-                    />
-                    <div className="max-md:hidden">
-                      <p className="font-medium text-gray-800">
-                        {car.brand} {car.model}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {car.seating_capacity} seats • {car.transmission}
-                      </p>
+          <tbody className="divide-y divide-gray-50">
+            {cars.length > 0 ? (
+              cars.map((car) => (
+                <tr key={car.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="p-5">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={car.image}
+                        alt=""
+                        className="h-16 w-24 object-cover rounded-xl border border-borderColor"
+                      />
+                      <div>
+                        <p className="font-black text-gray-800 text-base leading-tight">
+                          {car.brand} {car.model}
+                        </p>
+                        <p className="text-xs text-gray-400 font-bold mt-1 uppercase">
+                          {car.year} · {car.transmission} · {car.fuel_type}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </td>
+                  </td>
 
-                {/* Category */}
-                <td className="p-3 max-md:hidden">{car.category}</td>
+                  <td className="p-5 max-md:hidden font-bold text-gray-500 uppercase text-xs">
+                    {car.category}
+                  </td>
 
-                {/* Price */}
-                <td className="p-3 font-medium text-gray-800">
-                  {currency}
-                  {car.pricePerDay}/day
-                </td>
+                  <td className="p-5">
+                    <p className="text-lg font-black text-primary">{currency}{car.pricePerDay}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase">per day</p>
+                  </td>
 
-                {/* Status (Always Green) */}
-                <td className="p-3 max-md:hidden">
-                  <span className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-600">
-                    Available
-                  </span>
-                </td>
+                  <td className="p-5 max-md:hidden">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${car.isAvailable ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                      }`}>
+                      {car.isAvailable ? 'Available' : 'Unavailable'}
+                    </span>
+                  </td>
 
-                {/* Actions */}
-                <td className="p-3">
-                  <div className="flex justify-center gap-4">
-                    <button className="p-2 rounded-md border hover:bg-gray-100 transition">
-                      <img
-                        src={assets.eye_icon}
-                        alt="view"
-                        className="w-4"
-                      />
-                    </button>
-
-                    <button className="p-2 rounded-md border border-red-200 hover:bg-red-50 transition">
-                      <img
-                        src={assets.delete_icon}
-                        alt="delete"
-                        className="w-4"
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-
-            {cars.length === 0 && (
+                  <td className="p-5">
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => handleToggleAvailability(car.id)}
+                        className="p-2.5 rounded-xl border border-borderColor hover:bg-gray-100 transition-colors group"
+                        title={car.isAvailable ? 'Mark as Unavailable' : 'Mark as Available'}
+                      >
+                        <img src={assets.eye_icon} alt="Toggle" className="w-4 opacity-50 group-hover:opacity-100" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(car.id)}
+                        className="p-2.5 rounded-xl border border-red-100 hover:bg-red-50 transition-colors group"
+                        title="Delete Car"
+                      >
+                        <img src={assets.delete_icon} alt="Delete" className="w-4 opacity-40 group-hover:opacity-100" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-gray-400">
-                  No cars found
+                <td colSpan="5" className="p-24 text-center">
+                  <div className="flex flex-col items-center">
+                    <img src={assets.carIconColored} className="w-12 opacity-10 mb-4" alt="" />
+                    <p className="text-gray-400 font-medium">You haven't listed any cars yet.</p>
+                  </div>
                 </td>
               </tr>
             )}
