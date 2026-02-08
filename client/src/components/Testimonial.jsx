@@ -1,5 +1,3 @@
-import React from 'react'
-import Title from './Title'
 import { assets } from '../assets/assets';
 
 const Testimonial = () => {
@@ -7,20 +5,20 @@ const Testimonial = () => {
 
     const testimonials = [
         {
-            name: "Harshit Raj",
-            location: "USA",
+            name: "Shreya Jain",
+            location: "Pune,Maharastra",
             image: assets.testimonial_image_1,
             testimonial: "I've rented cars from various companies, but the experience with CarRental was exceptional."
         },
         {
-            name: "Adarsh shukla",
-            location: "EUROPE",
+            name: "Shena shukla",
+            location: "Mumbai,Maharastra",
             image: assets.testimonial_image_2,
             testimonial: "CarRental made my trip so much easier. The car was delivered right to my door, and the customer service was fantastic"
         },
         {
-            name: "Aman mota",
-            location: "CHINA",
+            name: "Parul Soni",
+            location: "Noida,Uttarpradesh",
             image: assets.testimonial_image_1,
             testimonial: "I highly recommend CarRental Their fleet is amazing, and always feel like I'm getting the best deal with excellent service"
         }
