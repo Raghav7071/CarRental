@@ -141,7 +141,7 @@ const Payment = () => {
                 </form>
 
                 <p className="text-center text-xs text-gray-400 mt-6 flex items-center justify-center gap-2">
-                    <img src={assets.lock_icon || ""} className="w-3" alt="" />
+                    {assets.check_icon && <img src={assets.check_icon} className="w-3" alt="" />}
                     Secured by MockPay
                 </p>
             </div>

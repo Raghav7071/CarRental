@@ -84,7 +84,6 @@ const AppContextProvider = (props) => {
                 { headers: { authorization: token } }
             );
             if (data.success) {
-                toast.success(data.message);
                 return data;
             } else {
                 toast.error(data.message);

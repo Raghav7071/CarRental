@@ -2,6 +2,8 @@ import { prisma } from "../configs/db.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import sendEmail from '../utils/sendEmail.js'
+import imagekit from "../configs/imageKit.js";
+import fs from "fs";
 
 const generateToken = (userId) => {
     return jwt.sign(userId, process.env.JWT_SECRET)
@@ -26,7 +28,12 @@ export const registerUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await prisma.user.create({
-            data: { name, email, password: hashedPassword }
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                image: `https://ui-avatars.com/api/?name=${name.split(" ").join("+")}&background=random`
+            }
         })
         const token = generateToken(user.id)
         res.json({ success: true, token })
@@ -78,6 +85,7 @@ export const bookCar = async (req, res) => {
 
         // Check if car exists and is available
         const car = await prisma.car.findUnique({ where: { id: carId } });
+        console.log({ car })
         if (!car) {
             return res.json({ success: false, message: "Car not found" });
         }
@@ -122,7 +130,7 @@ export const bookCar = async (req, res) => {
             }
         });
 
-        res.json({ success: true, message: "Car Booked Successfully!", booking });
+        res.json({ success: true, message: "Booking initiated. Processing payment...", booking });
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });
@@ -149,7 +157,6 @@ export const getUserBookings = async (req, res) => {
     }
 }
 
-// Cancel a booking
 // Cancel a booking
 export const cancelBooking = async (req, res) => {
     try {
@@ -209,6 +216,25 @@ export const payBooking = async (req, res) => {
             return res.json({ success: false, message: "Cannot pay for cancelled booking" });
         }
 
+        // One last check: Is the car still available?
+        const conflicts = await prisma.booking.findFirst({
+            where: {
+                carId: booking.carId,
+                status: 'confirmed',
+                id: { not: bookingId },
+                OR: [
+                    {
+                        pickupDate: { lte: booking.returnDate },
+                        returnDate: { gte: booking.pickupDate }
+                    }
+                ]
+            }
+        });
+
+        if (conflicts) {
+            return res.json({ success: false, message: "Car was booked by someone else during checkout. Payment refunded (Mock)." });
+        }
+
         // Mock Payment Success - Update status
         const updatedBooking = await prisma.booking.update({
             where: { id: bookingId },
@@ -220,7 +246,7 @@ export const payBooking = async (req, res) => {
         const emailSubject = `Booking Confirmed: ${booking.car.brand} ${booking.car.model}`;
         const emailText = `Your booking is confirmed.\nTotal: ${booking.amount}`;
 
-        await sendEmail({
+        sendEmail({
             to: booking.user.email,
             subject: emailSubject,
             text: emailText,
@@ -260,6 +286,47 @@ export const payBooking = async (req, res) => {
         });
 
         res.json({ success: true, message: "Payment Successful & Email Sent!", booking: updatedBooking });
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Update user image
+export const updateImage = async (req, res) => {
+    try {
+        const { id: userId } = req.user;
+        const imageFile = req.file;
+
+        if (!imageFile) {
+            return res.json({ success: false, message: "Please upload an image" });
+        }
+
+        const fileBuffer = fs.readFileSync(imageFile.path);
+        const response = await imagekit.upload({
+            file: fileBuffer,
+            fileName: imageFile.originalname,
+            folder: '/users'
+        });
+
+        const optimizedImageUrl = imagekit.url({
+            path: response.filePath,
+            transformation: [
+                { width: '500' },
+                { quality: 'auto' },
+                { format: 'webp' }
+            ]
+        });
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { image: optimizedImageUrl }
+        });
+
+        // Clean up temp file
+        fs.unlinkSync(imageFile.path);
+
+        res.json({ success: true, message: "Image Updated Successfully!", imageUrl: optimizedImageUrl });
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });

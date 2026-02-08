@@ -1,6 +1,7 @@
 import express from "express";
-import { getUserData, loginUser, registerUser, bookCar, getUserBookings, cancelBooking, payBooking } from "../controllers/userController.js";
+import { getUserData, loginUser, registerUser, bookCar, getUserBookings, cancelBooking, payBooking, updateImage } from "../controllers/userController.js";
 import { protect } from "../middleware/auth.js";
+import upload from "../middleware/multer.js";
 
 const userRouter = express.Router();
 
@@ -8,6 +9,7 @@ const userRouter = express.Router();
 userRouter.post('/register', registerUser)
 userRouter.post('/login', loginUser)
 userRouter.get('/get-data', protect, getUserData)
+userRouter.post('/update-image', protect, upload.single('image'), updateImage)
 
 // Booking routes
 userRouter.post('/book-car', protect, bookCar)

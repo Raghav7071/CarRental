@@ -50,7 +50,7 @@ export const searchCars = async (req, res) => {
             // Find bookings that overlap with the requested dates
             const overlappingBookings = await prisma.booking.findMany({
                 where: {
-                    status: { in: ['pending', 'confirmed'] },
+                    status: 'confirmed',
                     OR: [
                         {
                             pickupDate: { lte: returnDate },

@@ -2,16 +2,35 @@ import React, { useContext, useState } from 'react'
 import { assets, ownerMenuLinks } from '../../assets/assets'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Sidebar = () => {
-    const { userData, setToken, setUserData } = useContext(AppContext);
+    const { userData, token, backendUrl, setToken, setUserData } = useContext(AppContext);
     const location = useLocation();
     const navigate = useNavigate();
     const [image, setImage] = useState('');
 
-    const updateImage = async () => {
-        // TODO: Implement image update via API
-        setImage('');
+    const updateImage = async (img) => {
+        try {
+            const formData = new FormData();
+            formData.append('image', img || image);
+
+            const { data } = await axios.post(backendUrl + '/api/user/update-image', formData, {
+                headers: { authorization: token }
+            });
+
+            if (data.success) {
+                toast.success(data.message);
+                setUserData(prev => ({ ...prev, image: data.imageUrl }));
+                setImage('');
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error.message);
+        }
     };
 
     const handleLogout = () => {
@@ -32,7 +51,7 @@ const Sidebar = () => {
                         className='w-20 h-20 rounded-full object-cover border-2 border-borderColor'
                     />
                     <input type='file' id='image' accept='image/*' hidden onChange={e => {
-                        if (e.target.files[0]) setImage(e.target.files[0]);
+                        if (e.target.files[0]) updateImage(e.target.files[0]);
                     }} />
                     <div className='absolute hidden top-0 right-0 left-0 bottom-0 bg-black/10 rounded-full group-hover:flex items-center justify-center cursor-pointer'>
                         <img src={assets.edit_icon} alt="" className='w-5' />
