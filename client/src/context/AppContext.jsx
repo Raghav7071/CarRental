@@ -85,10 +85,10 @@ const AppContextProvider = (props) => {
             );
             if (data.success) {
                 toast.success(data.message);
-                return true;
+                return data;
             } else {
                 toast.error(data.message);
-                return false;
+                return null;
             }
         } catch (error) {
             console.log(error);

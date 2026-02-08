@@ -63,11 +63,11 @@ const CarDetails = () => {
 
     setBooking(true)
     const amount = calculateTotal()
-    const success = await bookCar(car.id, pickupDate, returnDate, amount)
+    const result = await bookCar(car.id, pickupDate, returnDate, amount)
     setBooking(false)
 
-    if (success) {
-      navigate('/my-bookings')
+    if (result && result.success) {
+      navigate('/payment', { state: { booking: result.booking } })
     }
   }
 
