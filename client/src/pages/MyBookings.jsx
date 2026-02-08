@@ -3,6 +3,7 @@ import Title from '../components/Title'
 import { assets } from '../assets/assets'
 import { AppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Loader from '../components/Loader'
 
 const MyBookings = () => {
@@ -36,10 +37,11 @@ const MyBookings = () => {
   }
 
   useEffect(() => {
-    if (token) {
-      fetchBookings()
-    } else {
+    if (!token) {
+      toast.error("Please login to view your bookings")
       navigate('/')
+    } else {
+      fetchBookings()
     }
   }, [token])
 
@@ -134,12 +136,20 @@ const MyBookings = () => {
                   </div>
 
                   {booking.status === 'pending' && (
-                    <button
-                      onClick={() => handleCancel(booking.id)}
-                      className='px-4 py-2 border border-red-200 text-red-500 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors'
-                    >
-                      Cancel Booking
-                    </button>
+                    <div className='flex gap-2'>
+                      <button
+                        onClick={() => navigate('/payment', { state: { booking } })}
+                        className='px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dull transition-colors shadow-sm'
+                      >
+                        Pay Now
+                      </button>
+                      <button
+                        onClick={() => handleCancel(booking.id)}
+                        className='px-4 py-2 border border-red-200 text-red-500 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors'
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

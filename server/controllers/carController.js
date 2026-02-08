@@ -4,7 +4,6 @@ import { prisma } from "../configs/db.js";
 export const listCars = async (req, res) => {
     try {
         const cars = await prisma.car.findMany({
-            where: { isAvailable: true },
             include: { owner: { select: { name: true, image: true } } },
             orderBy: { createdAt: 'desc' }
         });

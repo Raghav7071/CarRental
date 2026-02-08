@@ -156,7 +156,7 @@ const AddCar = () => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-700">Price per Day ($) *</label>
+            <label className="text-xs font-semibold text-gray-700">Price per Day (₹) *</label>
             <input
               required
               type="number"
@@ -238,7 +238,7 @@ const AddCar = () => {
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="e.g. New York"
+              placeholder="e.g. Mumbai"
               className="border border-borderColor rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>

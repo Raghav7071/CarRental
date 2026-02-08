@@ -1,7 +1,9 @@
-import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
 
 const Banner = () => {
+  const navigate = useNavigate()
+
   return (
     <div
       className="flex flex-col md:flex-row md:items-start items-center justify-between
@@ -25,6 +27,7 @@ const Banner = () => {
         </p>
 
         <button
+          onClick={() => navigate('/owner/add-car')}
           className="px-6 py-2 bg-white hover:bg-slate-100 transition-all
           text-primary rounded-lg text-sm mt-4 cursor-pointer"
         >

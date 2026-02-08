@@ -14,6 +14,8 @@ import AddCar from './pages/owner/AddCar';
 import MangeCars from './pages/owner/MangeCars';
 import MangeBookings from './pages/owner/MangeBookings';
 import Login from './components/Login';
+import Payment from './pages/Payment';
+import BookingConfirmation from './pages/BookingConfirmation';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -35,6 +37,8 @@ const App = () => {
         <Route path="/cars-details/:id" element={<CarDetails />} />
         <Route path="/cars" element={<Cars />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/payment" element={<Payment />} />
+        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
 
         {/* Owner routes */}
         <Route path="/owner" element={<Layout />}>
