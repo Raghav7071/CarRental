@@ -1,4 +1,5 @@
 import { assets } from '../assets/assets';
+import Title from './Title';
 
 const Testimonial = () => {
 
@@ -28,10 +29,13 @@ const Testimonial = () => {
 
 
     return (
-        <div className="py-28 px-6 md:px-16 lg:px-24 x1:px-44" subtitle='Discover why discerning travelers choose StayVenture for their luxury accommondations around the world.'>
-            <title title='What Our Customers Say'></title>
+        <div className="py-12 md:py-24 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32">
+            <Title
+                title='What Our Customers Say'
+                subTitle='Discover why discerning travelers choose our service for their luxury car rentals around the world.'
+            />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg grid-cols-3 gap-8 mt-18">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-10 md:mt-18 max-w-[1200px] mx-auto">
                 {testimonials.map((testimonial, index) => (
                     <div key={index} className="bg-white p-6 rounded-xl shadow-lg hover:-translate-y-1 transition-all duration-500">
                         <div className="flex items-center gap-3">

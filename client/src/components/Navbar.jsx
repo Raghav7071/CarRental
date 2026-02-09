@@ -16,44 +16,63 @@ const Navbar = ({ setShowLogin }) => {
     }
 
     return (
-        <div className={`flex items-center justify-between px-6 py-3 md:py-4
-  lg:px-24 xl:px-32 text-gray-600 border-borderColor relative transition-all
-  ${location.pathname === "/" ? "bg-light" : "bg-white"}`} >
+        <div className={`flex items-center justify-between px-4 py-3 md:py-4 lg:px-24 xl:px-32 text-gray-600 border-borderColor relative transition-all ${location.pathname === "/" ? "bg-light" : "bg-white"}`} >
 
             <Link to='/'>
-                <img src={assets.logo} alt='logo' className='h-8 hover:scale-105 transition-all duration-300 cursor-pointer'></img>
+                <img src={assets.logo} alt='logo' className='h-7 md:h-8 hover:scale-105 transition-all duration-300 cursor-pointer'></img>
             </Link>
-            <div className={`max-sm:fixed max-sm:h-screen max-sm:w-full max-sm:top-16 max-sm:border-t- border-borderColor right-0 flex flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 max-sm:p-4 transition-all duration-300 z-50 ${location.pathname === "/" ? "bg-light" : "bg-white"} ${open ? "max-sem:translate-x-0" : "max-sm:translate-x-full"} `}>
+
+            {/* Desktop Menu */}
+            <div className="hidden sm:flex items-center gap-6 md:gap-8">
                 {menuLinks.map((link, index) => (
-                    <Link key={index} to={link.path} className='hover:text-primary transition-all duration-300 font-medium'>{link.name}</Link>
+                    <Link key={index} to={link.path} className='hover:text-primary transition-all duration-300 font-medium whitespace-nowrap'>{link.name}</Link>
                 ))}
+            </div>
 
-                <div className='hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300'>
-                    <input type='text' className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" placeholder='Search products' />
-                    <img src={assets.search_icon} alt='search' />
-
+            <div className='flex items-center gap-2 md:gap-4'>
+                {/* Search Bar - Hidden on small mobile */}
+                <div className='hidden md:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-40 lg:max-w-56 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300'>
+                    <input type='text' className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" placeholder='Search' />
+                    <img src={assets.search_icon} alt='search' className="w-4 h-4" />
                 </div>
-                <div className='flex max-sm:flex-col items-starts-start sm:items-center gap-6'>
-                    {token && userData ? (
-                        <div className='flex items-center gap-4'>
-                            <button onClick={() => navigate('/owner')} className='cursor-pointer hover:text-primary transition-all duration-300 font-medium'>Dashboard</button>
-                            <div className='group relative cursor-pointer'>
-                                <img src={userData.image || assets.profile_pic} className='w-10 rounded-full hover:scale-110 hover:ring-2 hover:ring-primary transition-all duration-300' alt="" />
-                                <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
-                                    <div className='min-w-48 bg-slate-100 rounded flex flex-col gap-4 p-4'>
-                                        <p onClick={() => navigate('/my-bookings')} className='hover:bg-gray-200 hover:text-black px-2 py-1 rounded transition-all duration-200 cursor-pointer'>My Bookings</p>
-                                        <p onClick={logout} className='hover:bg-gray-200 hover:text-black px-2 py-1 rounded transition-all duration-200 cursor-pointer'>Logout</p>
-                                    </div>
+
+                {token && userData ? (
+                    <div className='flex items-center gap-4'>
+                        <button onClick={() => navigate('/owner')} className='hidden md:block cursor-pointer hover:text-primary transition-all duration-300 font-medium'>Dashboard</button>
+                        <div className='group relative cursor-pointer'>
+                            <img src={userData.image || assets.profile_pic} className='w-8 md:w-10 rounded-full hover:scale-110 hover:ring-2 hover:ring-primary transition-all duration-300' alt="" />
+                            <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
+                                <div className='min-w-40 bg-slate-100 rounded flex flex-col gap-2 p-3 shadow-lg'>
+                                    <p onClick={() => navigate('/owner')} className='md:hidden hover:bg-gray-200 hover:text-black px-2 py-1 rounded transition-all duration-200 cursor-pointer'>Dashboard</p>
+                                    <p onClick={() => navigate('/my-bookings')} className='hover:bg-gray-200 hover:text-black px-2 py-1 rounded transition-all duration-200 cursor-pointer'>My Bookings</p>
+                                    <p onClick={logout} className='hover:bg-gray-200 hover:text-black px-2 py-1 rounded transition-all duration-200 cursor-pointer'>Logout</p>
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        <button onClick={() => setShowLogin(true)} className='cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull hover:shadow-lg hover:scale-105 transition-all duration-300 text-white rounded-lg'>Login</button>
+                    </div>
+                ) : (
+                    <button onClick={() => setShowLogin(true)} className='cursor-pointer px-4 md:px-8 py-1.5 md:py-2 bg-primary hover:bg-primary-dull hover:shadow-lg hover:scale-105 transition-all duration-300 text-white rounded-lg text-sm md:text-base'>Login</button>
+                )}
+
+                {/* Mobile Menu Icon */}
+                <button className="sm:hidden z-50 cursor-pointer p-1" aria-label="Menu" onClick={() => setOpen(!open)}>
+                    <img src={open ? assets.close_icon : assets.menu_icon} alt='menu' className="w-6 h-6"></img>
+                </button>
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            <div className={`fixed inset-0 bg-black/50 transition-opacity duration-300 z-40 sm:hidden ${open ? "opacity-100 visible" : "opacity-0 invisible"}`} onClick={() => setOpen(false)}></div>
+
+            {/* Mobile Sidebar */}
+            <div className={`fixed top-0 right-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 sm:hidden ${open ? "translate-x-0" : "translate-x-full"}`}>
+                <div className="flex flex-col p-6 gap-6 mt-16">
+                    {menuLinks.map((link, index) => (
+                        <Link key={index} to={link.path} onClick={() => setOpen(false)} className='text-lg hover:text-primary transition-all duration-300 font-medium border-b border-gray-100 pb-2'>{link.name}</Link>
+                    ))}
+                    {token && userData && (
+                        <button onClick={() => { navigate('/owner'); setOpen(false); }} className='text-lg text-left hover:text-primary transition-all duration-300 font-medium border-b border-gray-100 pb-2'>Dashboard</button>
                     )}
                 </div>
-                <button className="sm:hidden cursor-pointer hover:rotate-90 transition-transform duration-300" aria-label="Menu" onClick={() => setOpen(!open)}>
-                    <img src={open ? assets.close_icon : assets.menu_icon} alt='menu'></img>
-                </button>
             </div>
 
         </div>
@@ -61,4 +80,3 @@ const Navbar = ({ setShowLogin }) => {
 }
 
 export default Navbar
-

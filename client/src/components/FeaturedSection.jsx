@@ -19,14 +19,14 @@ const FeaturedSection = () => {
 
 
   return (
-    <div className='flex flex-col items-center py-24 px-6 md:px-16 lg:px-24 xl:px-32'>
+    <div className='flex flex-col items-center py-12 md:py-24 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32'>
 
       <Title
         title='Featured Vehicles'
         subTitle='Explore our selection of premium vehicles available for your next adventure.'
       />
 
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-18'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-10 md:mt-18 w-full max-w-[1200px]'>
         {
           allCars.slice(0, 6).map((car) => (
             <CarCard key={car.id} car={car} />

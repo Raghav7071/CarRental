@@ -87,7 +87,7 @@ const Cars = () => {
 
   return (
     <div>
-      <div className='flex flex-col items-center py-20 bg-light max-md:px-4'>
+      <div className='flex flex-col items-center py-12 md:py-20 bg-light px-4 sm:px-8'>
         <Title
           title={dateFilterActive ? 'Available Cars for Your Dates' : 'Available Cars'}
           subTitle={dateFilterActive
@@ -96,52 +96,63 @@ const Cars = () => {
           }
         />
 
-        {/* Search Bar */}
-        <div className='bg-white rounded-xl mt-10 p-4 shadow-md w-full max-w-3xl'>
-          <div className='flex items-center gap-4 flex-wrap'>
-            <div className='flex-1 min-w-[200px]'>
-              <div className='flex items-center gap-2 border rounded-lg px-4 py-2'>
-                <img src={assets.searchIcon} alt="" className='w-5 opacity-50' />
+        {/* Search Bar & Filters */}
+        <div className='bg-white rounded-2xl mt-8 md:mt-10 p-4 md:p-6 shadow-md w-full max-w-4xl'>
+          <div className='flex flex-col lg:flex-row items-center gap-4'>
+            <div className='w-full lg:flex-1'>
+              <div className='flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 focus-within:border-primary transition-all duration-300'>
+                <img src={assets.search_icon} alt="" className='w-4 opacity-50' />
                 <input
                   type="text"
-                  placeholder="Search by brand, model, or location..."
-                  className='outline-none w-full'
+                  placeholder="Search brand, model, or location..."
+                  className='outline-none w-full text-sm'
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                 />
               </div>
             </div>
 
-            <select
-              className='border rounded-lg px-4 py-2 outline-none'
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            >
-              <option value="">All Categories</option>
-              <option value="Sedan">Sedan</option>
-              <option value="SUV">SUV</option>
-              <option value="Hatchback">Hatchback</option>
-              <option value="Luxury">Luxury</option>
-              <option value="Sports">Sports</option>
-            </select>
+            <div className='flex flex-row items-center gap-2 w-full lg:w-auto'>
+              <select
+                className='flex-1 lg:flex-none border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm bg-transparent focus:border-primary transition-all duration-300'
+                value={filters.category}
+                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              >
+                <option value="">Categories</option>
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Hatchback">Hatchback</option>
+                <option value="Luxury">Luxury</option>
+                <option value="Sports">Sports</option>
+              </select>
 
-            <select
-              className='border rounded-lg px-4 py-2 outline-none'
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="">Sort By</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="newest">Newest First</option>
-            </select>
+              <select
+                className='flex-1 lg:flex-none border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm bg-transparent focus:border-primary transition-all duration-300'
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="">Sort By</option>
+                <option value="price-low">Price: Low-High</option>
+                <option value="price-high">Price: High-Low</option>
+                <option value="newest">Newest First</option>
+              </select>
+
+              {(searchInput || filters.category || filters.transmission || filters.fuel_type || sortBy || dateFilterActive) && (
+                <button
+                  onClick={clearFilters}
+                  className='hidden sm:block text-xs text-red-500 hover:text-red-600 font-medium ml-2 whitespace-nowrap'
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
 
             {(searchInput || filters.category || filters.transmission || filters.fuel_type || sortBy || dateFilterActive) && (
               <button
                 onClick={clearFilters}
-                className='text-sm text-red-500 hover:underline'
+                className='sm:hidden text-xs text-red-500 hover:text-red-600 font-medium'
               >
-                Clear All
+                Clear all filters
               </button>
             )}
           </div>
