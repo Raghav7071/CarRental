@@ -1,6 +1,17 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { toast } from 'react-toastify'
 
 const Newsletter = () => {
+  const [email, setEmail] = useState('')
+
+  const onSubmitHandler = (e) => {
+    e.preventDefault()
+    if (email) {
+      toast.success('Subscribed Successfully!')
+      setEmail('')
+    }
+  }
+
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-2 px-4 md:px-8 my-10 mb-20 md:mb-40">
 
@@ -12,11 +23,13 @@ const Newsletter = () => {
         Subscribe to get the latest offers, new arrivals, and exclusive discounts
       </p>
 
-      <form className="flex flex-col xs:flex-row items-center justify-center max-w-2xl w-full gap-2 xs:gap-0 h-auto xs:h-12 md:h-14">
+      <form onSubmit={onSubmitHandler} className="flex flex-col xs:flex-row items-center justify-center max-w-2xl w-full gap-2 xs:gap-0 h-auto xs:h-12 md:h-14">
         <input
           className="border border-gray-300 h-12 xs:h-full w-full px-4 text-gray-500 outline-none rounded-md xs:rounded-l-md xs:rounded-r-none xs:border-r-0"
           type="email"
           placeholder="Enter your email id"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
 
