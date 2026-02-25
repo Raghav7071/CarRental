@@ -6,7 +6,7 @@ import Home from './pages/Home';
 import CarDetails from './pages/CarDetails';
 import Cars from './pages/Cars';
 import MyBookings from './pages/MyBookings';
-import { Footer } from './assets/Footer';
+import { Footer } from './components/Footer';
 
 import Layout from './pages/owner/Layout';
 import Dashboard from './pages/owner/Dashboard';
@@ -16,6 +16,11 @@ import MangeBookings from './pages/owner/MangeBookings';
 import Login from './components/Login';
 import Payment from './pages/Payment';
 import BookingConfirmation from './pages/BookingConfirmation';
+import AboutUs from './pages/AboutUs';
+import HelpCenter from './pages/HelpCenter';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Insurance from './pages/Insurance';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -39,6 +44,11 @@ const App = () => {
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/help-center" element={<HelpCenter />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/insurance" element={<Insurance />} />
 
         {/* Owner routes */}
         <Route path="/owner" element={<Layout />}>

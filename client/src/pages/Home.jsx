@@ -4,19 +4,19 @@ import FeaturedSection from '../components/FeaturedSection'
 import Banner from '../components/Banner'
 import Testimonial from '../components/Testimonial'
 import Newsletter from '../components/Newsletter'
-import { Footer } from '../assets/Footer'
+import { Footer } from '../components/Footer'
 import CarDetails from './CarDetails'
 
 const Home = () => {
   return (
     <>
-    <Hero />
-    <FeaturedSection />
-    <Banner />
-    <Testimonial/>
-    <Newsletter/>
-   
-    
+      <Hero />
+      <FeaturedSection />
+      <Banner />
+      <Testimonial />
+      <Newsletter />
+
+
     </>
   )
 }
