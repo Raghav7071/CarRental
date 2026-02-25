@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react'
+import React, { useContext, useState, useEffect, useRef } from 'react'
 import Title from '../components/Title'
 import CarCard from '../components/CarCard'
 import { assets } from '../assets/assets'
@@ -17,15 +17,34 @@ const Cars = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  // debouncedSearch is the value that actually triggers API calls — avoids firing on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
+  const isFirstRender = useRef(true);
 
-  // Trigger search whenever filters or page changes
+  // Debounce: update debouncedSearch 400ms after the user stops typing
+  // Also resets page to 1 when search changes (but NOT on initial mount)
+  useEffect(() => {
+    if (isFirstRender.current) return; // skip on mount — don't reset page
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Mark first render as done after mount
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
+
+  // Main effect: fires when page, filters, debounced search, or URL date params change
   useEffect(() => {
     const pickupDate = searchParams.get('pickupDate');
     const returnDate = searchParams.get('returnDate');
     const location = searchParams.get('location');
 
-    const searchCriteria = {
-      search: searchInput,
+    searchCars({
+      search: debouncedSearch,
       category: filters.category,
       sortBy: filters.sortBy,
       page: currentPage,
@@ -33,46 +52,24 @@ const Cars = () => {
       location,
       pickupDate,
       returnDate
-    };
+    });
 
-    searchCars(searchCriteria);
-
-    // Sync URL with state
+    // Sync URL
     const newParams = new URLSearchParams(searchParams);
-    if (searchInput) newParams.set('search', searchInput); else newParams.delete('search');
+    if (debouncedSearch) newParams.set('search', debouncedSearch); else newParams.delete('search');
     if (filters.category) newParams.set('category', filters.category); else newParams.delete('category');
     if (filters.sortBy) newParams.set('sortBy', filters.sortBy); else newParams.delete('sortBy');
-    if (currentPage > 1) newParams.set('page', currentPage); else newParams.delete('page');
-    setSearchParams(newParams);
+    if (currentPage > 1) newParams.set('page', String(currentPage)); else newParams.delete('page');
+    setSearchParams(newParams, { replace: true });
 
-  }, [filters, currentPage, searchParams.get('pickupDate'), searchParams.get('returnDate'), searchParams.get('location')]);
-
-  // Handle search input with debouncing or on Enter (simpler version for now)
-  const handleSearch = (e) => {
-    if (e.key === 'Enter') {
-      setCurrentPage(1);
-      // The effect above will trigger because of how dependencies work if we add searchInput to deps, 
-      // but to keep it responsive we'll manually trigger if needed or just let the effect handle it.
-      // Let's add searchInput to the effect dependencies for simplicity, 
-      // but maybe with a button or Enter key to avoid too many requests.
-    }
-  };
-
-  // Search effect separate for input to avoid too many API calls
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      setCurrentPage(1);
-      // This will trigger the main effect because it changes currentPage or searchParams
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchInput]);
+  }, [filters, currentPage, debouncedSearch, searchParams.get('pickupDate'), searchParams.get('returnDate'), searchParams.get('location')]);
 
   const clearFilters = () => {
     setSearchInput('');
+    setDebouncedSearch('');
     setFilters({ category: '', sortBy: '' });
     setCurrentPage(1);
-    setSearchParams({}); // Clear URL params too
+    setSearchParams({}, { replace: true });
   };
 
   const handlePageChange = (newPage) => {
@@ -107,7 +104,6 @@ const Cars = () => {
                   className='outline-none w-full text-sm'
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={handleSearch}
                 />
               </div>
             </div>
