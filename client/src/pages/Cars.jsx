@@ -10,7 +10,7 @@ const Cars = () => {
   const { allCars, fetchAllCars, searchCars, loading } = useContext(AppContext);
   const [searchParams] = useSearchParams();
 
-  const [searchInput, setSearchInput] = useState(searchParams.get('location') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || searchParams.get('location') || '');
   const [filters, setFilters] = useState({
     category: '',
     transmission: '',

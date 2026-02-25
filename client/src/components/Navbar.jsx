@@ -7,7 +7,15 @@ const Navbar = ({ setShowLogin }) => {
     const { token, setToken, userData } = useContext(AppContext);
     const location = useLocation()
     const [open, setOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
+
+    const handleSearch = () => {
+        if (searchTerm.trim()) {
+            navigate(`/cars?search=${encodeURIComponent(searchTerm.trim())}`);
+            setSearchTerm("");
+        }
+    }
 
     const logout = () => {
         setToken("");
@@ -32,8 +40,20 @@ const Navbar = ({ setShowLogin }) => {
             <div className='flex items-center gap-2 md:gap-4'>
                 {/* Search Bar - Hidden on small mobile */}
                 <div className='hidden md:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-40 lg:max-w-56 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300'>
-                    <input type='text' className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" placeholder='Search' />
-                    <img src={assets.search_icon} alt='search' className="w-4 h-4" />
+                    <input
+                        type='text'
+                        className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500"
+                        placeholder='Search'
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <img
+                        src={assets.search_icon}
+                        alt='search'
+                        className="w-4 h-4 cursor-pointer hover:scale-110 transition-all"
+                        onClick={handleSearch}
+                    />
                 </div>
 
                 {token && userData ? (
