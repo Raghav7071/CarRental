@@ -11,15 +11,22 @@ const AppContextProvider = (props) => {
     const [token, setToken] = useState(localStorage.getItem('token') || "");
     const [userData, setUserData] = useState(null);
     const [allCars, setAllCars] = useState([]);
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 9,
+        totalPages: 0
+    });
     const [loading, setLoading] = useState(false);
 
-    // Fetch all available cars
-    const fetchAllCars = async () => {
+    // Fetch all available cars with pagination
+    const fetchAllCars = async (page = 1, limit = 9) => {
         try {
             setLoading(true);
-            const { data } = await axios.get(backendUrl + '/api/car/list');
+            const { data } = await axios.get(`${backendUrl}/api/car/list?page=${page}&limit=${limit}`);
             if (data.success) {
                 setAllCars(data.cars);
+                setPagination(data.pagination);
             } else {
                 toast.error(data.message);
             }
@@ -31,20 +38,22 @@ const AppContextProvider = (props) => {
         }
     };
 
-    // Search cars with filters
+    // Search cars with filters and pagination
     const searchCars = async (filters) => {
         try {
             setLoading(true);
 
             // Clean undefined/null values
-            Object.keys(filters).forEach(key =>
-                (filters[key] === undefined || filters[key] === null || filters[key] === '') && delete filters[key]
+            const cleanFilters = { ...filters };
+            Object.keys(cleanFilters).forEach(key =>
+                (cleanFilters[key] === undefined || cleanFilters[key] === null || cleanFilters[key] === '') && delete cleanFilters[key]
             );
 
-            const params = new URLSearchParams(filters);
+            const params = new URLSearchParams(cleanFilters);
             const { data } = await axios.get(backendUrl + '/api/car/search?' + params);
             if (data.success) {
                 setAllCars(data.cars);
+                setPagination(data.pagination);
             } else {
                 toast.error(data.message);
             }
@@ -143,6 +152,7 @@ const AppContextProvider = (props) => {
         loadUserData,
         allCars,
         setAllCars,
+        pagination,
         fetchAllCars,
         searchCars,
         loading,

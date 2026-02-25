@@ -7,82 +7,81 @@ import Loader from '../components/Loader'
 import { useSearchParams } from 'react-router-dom';
 
 const Cars = () => {
-  const { allCars, fetchAllCars, searchCars, loading } = useContext(AppContext);
-  const [searchParams] = useSearchParams();
+  const { allCars, pagination, fetchAllCars, searchCars, loading } = useContext(AppContext);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [searchInput, setSearchInput] = useState(searchParams.get('search') || searchParams.get('location') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [filters, setFilters] = useState({
-    category: '',
-    transmission: '',
-    fuel_type: ''
+    category: searchParams.get('category') || '',
+    sortBy: searchParams.get('sortBy') || ''
   });
-  const [sortBy, setSortBy] = useState('');
 
-  // Initial fetch with query params if present
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+
+  // Trigger search whenever filters or page changes
   useEffect(() => {
     const pickupDate = searchParams.get('pickupDate');
     const returnDate = searchParams.get('returnDate');
     const location = searchParams.get('location');
 
-    if (pickupDate && returnDate) {
-      // If dates are present, trigger a server-side search for availability checking
-      searchCars({
-        location: location || '',
-        pickupDate,
-        returnDate
-      });
-    } else {
-      // Otherwise just fetch all cars (or use existing allCars if already loaded and no specific search)
-      fetchAllCars();
-    }
-  }, [searchParams]);
+    const searchCriteria = {
+      search: searchInput,
+      category: filters.category,
+      sortBy: filters.sortBy,
+      page: currentPage,
+      limit: 9,
+      location,
+      pickupDate,
+      returnDate
+    };
 
-  // Filter and sort cars locally (for other attributes)
-  const getFilteredCars = () => {
-    let filtered = [...allCars];
+    searchCars(searchCriteria);
 
-    // Search by brand or model
-    if (searchInput) {
-      filtered = filtered.filter(car =>
-        car.brand.toLowerCase().includes(searchInput.toLowerCase()) ||
-        car.model.toLowerCase().includes(searchInput.toLowerCase()) ||
-        car.location.toLowerCase().includes(searchInput.toLowerCase())
-      );
-    }
+    // Sync URL with state
+    const newParams = new URLSearchParams(searchParams);
+    if (searchInput) newParams.set('search', searchInput); else newParams.delete('search');
+    if (filters.category) newParams.set('category', filters.category); else newParams.delete('category');
+    if (filters.sortBy) newParams.set('sortBy', filters.sortBy); else newParams.delete('sortBy');
+    if (currentPage > 1) newParams.set('page', currentPage); else newParams.delete('page');
+    setSearchParams(newParams);
 
-    // Apply filters
-    if (filters.category) {
-      filtered = filtered.filter(car => car.category === filters.category);
-    }
-    if (filters.transmission) {
-      filtered = filtered.filter(car => car.transmission === filters.transmission);
-    }
-    if (filters.fuel_type) {
-      filtered = filtered.filter(car => car.fuel_type === filters.fuel_type);
-    }
+  }, [filters, currentPage, searchParams.get('pickupDate'), searchParams.get('returnDate'), searchParams.get('location')]);
 
-    // Sort
-    if (sortBy === 'price-low') {
-      filtered.sort((a, b) => parseInt(a.pricePerDay) - parseInt(b.pricePerDay));
-    } else if (sortBy === 'price-high') {
-      filtered.sort((a, b) => parseInt(b.pricePerDay) - parseInt(a.pricePerDay));
-    } else if (sortBy === 'newest') {
-      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // Handle search input with debouncing or on Enter (simpler version for now)
+  const handleSearch = (e) => {
+    if (e.key === 'Enter') {
+      setCurrentPage(1);
+      // The effect above will trigger because of how dependencies work if we add searchInput to deps, 
+      // but to keep it responsive we'll manually trigger if needed or just let the effect handle it.
+      // Let's add searchInput to the effect dependencies for simplicity, 
+      // but maybe with a button or Enter key to avoid too many requests.
     }
-
-    return filtered;
   };
+
+  // Search effect separate for input to avoid too many API calls
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setCurrentPage(1);
+      // This will trigger the main effect because it changes currentPage or searchParams
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchInput]);
 
   const clearFilters = () => {
     setSearchInput('');
-    setFilters({ category: '', transmission: '', fuel_type: '' });
-    setSortBy('');
-    fetchAllCars(); // Reset to all cars
+    setFilters({ category: '', sortBy: '' });
+    setCurrentPage(1);
+    setSearchParams({}); // Clear URL params too
   };
 
-  const filteredCars = getFilteredCars();
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo(0, 0);
+    }
+  };
 
-  // Display date filter info if active
   const dateFilterActive = searchParams.get('pickupDate') && searchParams.get('returnDate');
 
   return (
@@ -108,6 +107,7 @@ const Cars = () => {
                   className='outline-none w-full text-sm'
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={handleSearch}
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ const Cars = () => {
               <select
                 className='flex-1 lg:flex-none border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm bg-transparent focus:border-primary transition-all duration-300'
                 value={filters.category}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                onChange={(e) => { setFilters({ ...filters, category: e.target.value }); setCurrentPage(1); }}
               >
                 <option value="">Categories</option>
                 <option value="Sedan">Sedan</option>
@@ -128,8 +128,8 @@ const Cars = () => {
 
               <select
                 className='flex-1 lg:flex-none border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm bg-transparent focus:border-primary transition-all duration-300'
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                value={filters.sortBy}
+                onChange={(e) => { setFilters({ ...filters, sortBy: e.target.value }); setCurrentPage(1); }}
               >
                 <option value="">Sort By</option>
                 <option value="price-low">Price: Low-High</option>
@@ -137,7 +137,7 @@ const Cars = () => {
                 <option value="newest">Newest First</option>
               </select>
 
-              {(searchInput || filters.category || filters.transmission || filters.fuel_type || sortBy || dateFilterActive) && (
+              {(searchInput || filters.category || filters.sortBy || dateFilterActive) && (
                 <button
                   onClick={clearFilters}
                   className='hidden sm:block text-xs text-red-500 hover:text-red-600 font-medium ml-2 whitespace-nowrap'
@@ -147,7 +147,7 @@ const Cars = () => {
               )}
             </div>
 
-            {(searchInput || filters.category || filters.transmission || filters.fuel_type || sortBy || dateFilterActive) && (
+            {(searchInput || filters.category || filters.sortBy || dateFilterActive) && (
               <button
                 onClick={clearFilters}
                 className='sm:hidden text-xs text-red-500 hover:text-red-600 font-medium'
@@ -165,11 +165,13 @@ const Cars = () => {
           <Loader />
         ) : (
           <>
-            <p className='text-gray-500'>
-              Showing {filteredCars.length} {filteredCars.length === 1 ? 'Car' : 'Cars'}
-            </p>
+            <div className='flex justify-between items-center mb-6'>
+              <p className='text-gray-500'>
+                Showing {allCars.length} of {pagination.total} {pagination.total === 1 ? 'Car' : 'Cars'}
+              </p>
+            </div>
 
-            {filteredCars.length === 0 ? (
+            {allCars.length === 0 ? (
               <div className='text-center py-20'>
                 <img src={assets.car_icon} alt="" className='w-16 mx-auto opacity-20 mb-4' />
                 <p className='text-gray-400'>No cars found matching your criteria</p>
@@ -178,11 +180,44 @@ const Cars = () => {
                 </button>
               </div>
             ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-4 max-w-7xl mx-auto'>
-                {filteredCars.map((car) => (
-                  <CarCard key={car.id} car={car} />
-                ))}
-              </div>
+              <>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-4 max-w-7xl mx-auto'>
+                  {allCars.map((car) => (
+                    <CarCard key={car.id} car={car} />
+                  ))}
+                </div>
+
+                {/* Pagination UI */}
+                {pagination.totalPages > 1 && (
+                  <div className='flex justify-center items-center gap-2 mt-16'>
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-4 py-2 rounded-lg border ${currentPage === 1 ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-gray-600 border-gray-200 hover:border-primary hover:text-primary'} transition-all duration-300`}
+                    >
+                      Previous
+                    </button>
+
+                    {[...Array(pagination.totalPages)].map((_, index) => (
+                      <button
+                        key={index + 1}
+                        onClick={() => handlePageChange(index + 1)}
+                        className={`w-10 h-10 rounded-lg border transition-all duration-300 ${currentPage === index + 1 ? 'bg-primary border-primary text-white' : 'text-gray-600 border-gray-200 hover:border-primary hover:text-primary'}`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === pagination.totalPages}
+                      className={`px-4 py-2 rounded-lg border ${currentPage === pagination.totalPages ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-gray-600 border-gray-200 hover:border-primary hover:text-primary'} transition-all duration-300`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
