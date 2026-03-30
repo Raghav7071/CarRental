@@ -17,6 +17,7 @@ model User {
   password  String
   role      String    @default("user") // "owner" or "user"
   image     String?   @default("")
+  phone     String?
   cars      Car[]     @relation("UserCars")
   bookings  Booking[] @relation("UserBookings")
   createdAt DateTime  @default(now())

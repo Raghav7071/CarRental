@@ -260,26 +260,26 @@ export const payBooking = async (req, res) => {
                 <div style="padding: 30px 0; text-align: center;">
                     <h2 style="color: #333; margin-top: 0;">Booking Confirmed!</h2>
                     <p style="color: #555; font-size: 16px; line-height: 1.5;">
-                        Hello <strong>${booking.user.name}</strong>,<br>
-                        Your payment of <strong style="color: #0558FE;">₹${booking.amount}</strong> was successful.
+                        Hello <strong>\${booking.user.name}</strong>,<br>
+                        Your payment of <strong style="color: #0558FE;">₹\${booking.amount}</strong> was successful.
                     </p>
                     
                     <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
                         <h3 style="color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-top: 0;">Vehicle Details</h3>
-                        <p style="margin: 8px 0;"><strong>Car:</strong> ${booking.car.brand} ${booking.car.model} (${booking.car.year})</p>
-                        <p style="margin: 8px 0;"><strong>Category:</strong> ${booking.car.category}</p>
-                        <p style="margin: 8px 0;"><strong>Location:</strong> ${booking.car.location}</p>
+                        <p style="margin: 8px 0;"><strong>Car:</strong> \${booking.car.brand} \${booking.car.model} (\${booking.car.year})</p>
+                        <p style="margin: 8px 0;"><strong>Category:</strong> \${booking.car.category}</p>
+                        <p style="margin: 8px 0;"><strong>Location:</strong> \${booking.car.location}</p>
                         
                         <h3 style="color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-top: 20px;">Rental Period</h3>
-                        <p style="margin: 8px 0;"><strong>Pickup:</strong> ${booking.pickupDate}</p>
-                        <p style="margin: 8px 0;"><strong>Return:</strong> ${booking.returnDate}</p>
+                        <p style="margin: 8px 0;"><strong>Pickup:</strong> \${booking.pickupDate}</p>
+                        <p style="margin: 8px 0;"><strong>Return:</strong> \${booking.returnDate}</p>
                     </div>
 
-                    <p style="font-size: 14px; color: #888;">Ticket ID: ${booking.id}</p>
+                    <p style="font-size: 14px; color: #888;">Ticket ID: \${booking.id}</p>
                 </div>
 
                 <div style="text-align: center; padding-top: 20px; border-top: 1px solid #eee; color: #aaa; font-size: 12px;">
-                    <p>&copy; ${new Date().getFullYear()} Car Rental Inc. All rights reserved.</p>
+                    <p>&copy; \${new Date().getFullYear()} Car Rental Inc. All rights reserved.</p>
                 </div>
             </div>
             `
@@ -327,6 +327,58 @@ export const updateImage = async (req, res) => {
         fs.unlinkSync(imageFile.path);
 
         res.json({ success: true, message: "Image Updated Successfully!", imageUrl: optimizedImageUrl });
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Forgot Password - Send Mock OTP
+export const forgotPassword = async (req, res) => {
+    try {
+        const { phone } = req.body;
+        if (!phone) {
+            return res.json({ success: false, message: "Phone number is required" });
+        }
+
+        const user = await prisma.user.findFirst({ where: { phone } });
+        if (!user) {
+            return res.json({ success: false, message: "User not found with this phone number" });
+        }
+
+        // In a real app, send OTP via SMS here
+        res.json({ success: true, message: "OTP sent to your phone number: 123456" });
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Reset Password - Verify Mock OTP & Update
+export const resetPassword = async (req, res) => {
+    try {
+        const { phone, otp, newPassword } = req.body;
+
+        if (!phone || !otp || !newPassword) {
+            return res.json({ success: false, message: "Missing required fields" });
+        }
+
+        if (otp !== "123456") {
+            return res.json({ success: false, message: "Invalid OTP" });
+        }
+
+        const user = await prisma.user.findFirst({ where: { phone } });
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { password: hashedPassword }
+        });
+
+        res.json({ success: true, message: "Password reset successfully!" });
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });

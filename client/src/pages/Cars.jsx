@@ -185,7 +185,7 @@ const Cars = () => {
 
                 {/* Pagination UI */}
                 {pagination.totalPages > 1 && (
-                  <div className='flex justify-center items-center gap-2 mt-16'>
+                  <div className='flex justify-center items-center gap-2 mt-16 flex-wrap'>
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -194,15 +194,43 @@ const Cars = () => {
                       Previous
                     </button>
 
-                    {[...Array(pagination.totalPages)].map((_, index) => (
-                      <button
-                        key={index + 1}
-                        onClick={() => handlePageChange(index + 1)}
-                        className={`w-10 h-10 rounded-lg border transition-all duration-300 ${currentPage === index + 1 ? 'bg-primary border-primary text-white' : 'text-gray-600 border-gray-200 hover:border-primary hover:text-primary'}`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                    {(() => {
+                      const totalPages = pagination.totalPages;
+                      const pages = [];
+                      const showEllipsis = totalPages > 7;
+
+                      if (!showEllipsis) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        // Logic for truncated pagination: 1 ... curr-1 curr curr+1 ... last
+                        pages.push(1);
+
+                        let start = Math.max(2, currentPage - 1);
+                        let end = Math.min(totalPages - 1, currentPage + 1);
+
+                        if (currentPage <= 3) {
+                          end = 4;
+                        } else if (currentPage >= totalPages - 2) {
+                          start = totalPages - 3;
+                        }
+
+                        if (start > 2) pages.push('...');
+                        for (let i = start; i <= end; i++) pages.push(i);
+                        if (end < totalPages - 1) pages.push('...');
+
+                        pages.push(totalPages);
+                      }
+
+                      return pages.map((page, index) => (
+                        <button
+                          key={index}
+                          onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
+                          className={`w-10 h-10 rounded-lg border transition-all duration-300 ${page === '...' ? 'cursor-default border-transparent' : (currentPage === page ? 'bg-primary border-primary text-white' : 'text-gray-600 border-gray-200 hover:border-primary hover:text-primary')}`}
+                        >
+                          {page}
+                        </button>
+                      ));
+                    })()}
 
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
