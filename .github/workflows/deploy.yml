@@ -1,0 +1,167 @@
+name: Deploy – Manual / Release to ECS
+
+# Triggered manually (workflow_dispatch) or on semver release tags (v*)
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (e.g. latest or a commit SHA)"
+        required: true
+        default: "latest"
+      service:
+        description: "Which service to deploy: client | server | all"
+        required: true
+        default: "all"
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPO_CLIENT: car-rental-client
+  ECR_REPO_SERVER: car-rental-server
+  ECS_CLUSTER: car-rental-cluster
+  ECS_SERVICE_CLIENT: car-rental-client-service
+  ECS_SERVICE_SERVER: car-rental-server-service
+  ECS_TASK_DEF_CLIENT: car-rental-client-task
+  ECS_TASK_DEF_SERVER: car-rental-server-task
+  CONTAINER_NAME_CLIENT: car-rental-client
+  CONTAINER_NAME_SERVER: car-rental-server
+
+jobs:
+  # ────────────────────────────────────────────────
+  # Resolve the image tag to use
+  # ────────────────────────────────────────────────
+  resolve-tag:
+    name: "Resolve image tag"
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.set-tag.outputs.tag }}
+
+    steps:
+      - name: Determine image tag
+        id: set-tag
+        run: |
+          # On tag push → use the git tag; on manual dispatch → use the input
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          fi
+
+  # ────────────────────────────────────────────────
+  # Deploy Client to ECS
+  # ────────────────────────────────────────────────
+  deploy-client:
+    name: "Client – Force-deploy to ECS"
+    runs-on: ubuntu-latest
+    needs: resolve-tag
+    if: >
+      github.event_name == 'push' ||
+      github.event.inputs.service == 'client' ||
+      github.event.inputs.service == 'all'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download current ECS task definition (client)
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEF_CLIENT }} \
+            --query taskDefinition \
+            --output json > task-def-client.json
+
+      - name: Render new task definition with chosen image tag
+        id: task-def-client
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def-client.json
+          container-name: ${{ env.CONTAINER_NAME_CLIENT }}
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_CLIENT }}:${{ needs.resolve-tag.outputs.tag }}
+
+      - name: Deploy client task definition to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-client.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_CLIENT }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+  # ────────────────────────────────────────────────
+  # Deploy Server to ECS
+  # ────────────────────────────────────────────────
+  deploy-server:
+    name: "Server – Force-deploy to ECS"
+    runs-on: ubuntu-latest
+    needs: resolve-tag
+    if: >
+      github.event_name == 'push' ||
+      github.event.inputs.service == 'server' ||
+      github.event.inputs.service == 'all'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download current ECS task definition (server)
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEF_SERVER }} \
+            --query taskDefinition \
+            --output json > task-def-server.json
+
+      - name: Render new task definition with chosen image tag
+        id: task-def-server
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def-server.json
+          container-name: ${{ env.CONTAINER_NAME_SERVER }}
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_SERVER }}:${{ needs.resolve-tag.outputs.tag }}
+
+      - name: Deploy server task definition to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-server.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_SERVER }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+  # ────────────────────────────────────────────────
+  # Notify on success
+  # ────────────────────────────────────────────────
+  notify:
+    name: "Deployment Summary"
+    runs-on: ubuntu-latest
+    needs: [deploy-client, deploy-server]
+    if: always()
+
+    steps:
+      - name: Print deployment summary
+        run: |
+          echo "========================================"
+          echo "  CarRental Deployment Summary"
+          echo "========================================"
+          echo "  Tag deployed : ${{ needs.resolve-tag.outputs.tag }}"
+          echo "  Cluster      : ${{ env.ECS_CLUSTER }}"
+          echo "  Region       : ${{ env.AWS_REGION }}"
+          echo "  Triggered by : ${{ github.actor }}"
+          echo "  Event        : ${{ github.event_name }}"
+          echo "========================================"
